@@ -1,37 +1,35 @@
 import gymnasium as gym
 import numpy as np
 
-class LearningRateDecay:
+class ExplorationRateDecay:
     def __init__(self, min_rate, max_rate, decay_rate):
         self.min_rate = min_rate
         self.max_rate = max_rate
         self.decay_rate = decay_rate
 
     def __call__(self, episode):
-        alpha = self.min_rate + (self.max_rate - self.min_rate) * \
+        epsilon = self.min_rate + (self.max_rate - self.min_rate) * \
                 np.exp(- self.decay_rate * episode)
-        return alpha 
+        return epsilon 
 
 class FrozenLakeAgent:
     def __init__(self,
                  env,
                  gamma=0.99,
-                 epsilon=1,
-                 epsilon_decay=0.001):
+                 alpha=0.7):
         
         # Environment for agent
         self.env = env
         # discount factor
         self.gamma = gamma
-        # exploration exploitation tradeoff parameters
-        self.epsilon = epsilon
-        self.epsilon_decay = epsilon_decay
+        # learning rate
+        self.alpha = alpha
         # Q values
         self.Q_table = np.zeros((self.env.observation_space.n, 
                                  self.env.action_space.n))
 
-    def policy(self, state):
-        if np.random.uniform(0, 1) < self.epsilon:
+    def policy(self, state, epsilon):
+        if np.random.uniform(0, 1) < epsilon:
             # exploration
             action = self.env.action_space.sample()
         else:
@@ -40,26 +38,26 @@ class FrozenLakeAgent:
 
         return action
 
-    def update_q(self, alpha, state, action, reward, next_state):
-        self.Q_table[state, action] = (1 - alpha) * self.Q_table[state, action] + \
-                                       alpha * (reward + self.gamma * \
+    def update_q(self, state, action, reward, next_state):
+        self.Q_table[state, action] = (1 - self.alpha) * self.Q_table[state, action] + \
+                                       self.alpha * (reward + self.gamma * \
                                                      np.argmax(self.Q_table[next_state, :])
                                                      )
 
-    def train(self, n_episodes, learning_rate):
+    def train(self, n_episodes, explortion_rate):
         rewards_per_episode = []
         for episode in range(n_episodes):
             state = self.env.reset()[0]
             total_reward = 0
             done = False
-            alpha = learning_rate(episode)
+            epsilon = explortion_rate(episode)
 
             while not done:
                 # select action
-                action = self.policy(state)
+                action = self.policy(state, epsilon)
                 # update Q table
                 next_state, reward, done, _, _ = self.env.step(action) 
-                self.update_q(alpha, state, action, reward, next_state)   
+                self.update_q(state, action, reward, next_state)   
                 # set new states
                 state = next_state
 
@@ -76,9 +74,9 @@ class FrozenLakeAgent:
         
 if __name__ == '__main__':
     env = gym.make('FrozenLake-v1', render_mode='ansi') 
-    learning_rate = LearningRateDecay(0.2, 1, 0.0000001)
+    explortion_rate = ExplorationRateDecay(0.0001, 1, 0.0005)
     agent = FrozenLakeAgent(env)
-    agent.train(10000, learning_rate)
+    agent.train(10000, explortion_rate)
     print(f"\x1B[33m-----Q_table-----\x1B[0m")
-    np.set_printoptions(precision=3)
+    np.set_printoptions(precision=2)
     print('\x1B[34m', agent.Q_table)
