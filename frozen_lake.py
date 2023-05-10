@@ -20,7 +20,10 @@ class FrozenLakeAgent:
     def __init__(self,
                  env,
                  gamma=0.99,
-                 alpha=0.1):
+                 alpha=0.1,
+                 min_rate = 0.01,
+                 max_rate = 1,
+                 decay_rate = 0.001):
         
         # Environment for agent
         self.env = env
@@ -31,6 +34,7 @@ class FrozenLakeAgent:
         # Q values
         self.Q_table = np.zeros((self.env.observation_space.n, 
                                  self.env.action_space.n))
+        self.explortion_rate = ExplorationRateDecay(min_rate, max_rate, decay_rate)
 
     def policy(self, state, epsilon):
         if np.random.uniform(0, 1) < epsilon:
@@ -43,18 +47,19 @@ class FrozenLakeAgent:
         return action
 
     def update_q(self, state, action, reward, next_state):
+        # Bellman optimality equation
         self.Q_table[state, action] = (1 - self.alpha) * self.Q_table[state, action] + \
                                        self.alpha * (reward + self.gamma * \
                                                      np.max(self.Q_table[next_state, :])
                                                      )
 
-    def train(self, n_episodes, n_steps_per_episode, explortion_rate):
+    def train(self, n_episodes, n_steps_per_episode):
         rewards_per_episode = []
         for episode in range(n_episodes):
             state = self.env.reset()[0]
             total_reward = 0
             done = False
-            epsilon = explortion_rate (episode)
+            epsilon = self.explortion_rate(episode)
 
             for _ in range(n_steps_per_episode):
                 # select action
@@ -64,7 +69,7 @@ class FrozenLakeAgent:
                 self.update_q(state, action, reward, next_state)   
                 # set new states
                 state = next_state
-
+                # reward increament for present step
                 total_reward += reward
 
                 if done:
@@ -77,6 +82,7 @@ class FrozenLakeAgent:
 
         
 if __name__ == '__main__':
+    # Params
     n_episodes = 10000
     n_steps_per_episode = 100
     min_rate = 0.01
@@ -85,11 +91,19 @@ if __name__ == '__main__':
     learning_rate = 0.1
     discount_rate = 0.99
 
+    # Environment & Agent
     env = gym.make('FrozenLake-v1', render_mode='ansi') 
-    explortion_rate = ExplorationRateDecay(min_rate, max_rate, decay_rate)
-    agent = FrozenLakeAgent(env, discount_rate, learning_rate)
-    agent.train(n_episodes, n_steps_per_episode, explortion_rate)
+    agent = FrozenLakeAgent(env,
+                            discount_rate,
+                            learning_rate,
+                            min_rate,
+                            max_rate,
+                            decay_rate)
+    
+    # Train the agent on environment
+    agent.train(n_episodes, n_steps_per_episode)
 
+    # Q tabe after learning optimal policy
     print(f"\x1B[33m-----Q_table-----\x1B[0m")
     np.set_printoptions(precision=2)
     print('\x1B[34m', agent.Q_table)
