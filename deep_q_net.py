@@ -160,8 +160,8 @@ class DQNAgent:
             rewards_per_episode.append(total_reward)
 
             if episode % 10 == 9:
-                print(f"\x1B[35mEpisode: {episode}, \
-                      Reward: {sum(rewards_per_episode[-1000:])/(batch_size*1000.0)}\x1B[0m")
+                print(f"\x1B[35mEpisode: {episode}, ",
+                      f"Reward: {sum(rewards_per_episode[-1000:])/(batch_size*1000.0)}\x1B[0m""")
 
 
 if __name__ == '__main__':
