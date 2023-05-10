@@ -110,7 +110,7 @@ class DQNAgent:
 
             for step in range(n_steps_per_episode):
                 total_reward = 0
-                
+
                 # determine and perform action
                 action = self.policy(state, epsilon)
                 next_state, reward, done, _, _ = self.env.step(action)
@@ -160,7 +160,7 @@ class DQNAgent:
 
             assert (
                 total_reward <= batch_size
-            ), f"Total reward per batch {total_reward} but can't exceed {batch_size}"
+            ), f"Total reward per batch {total_reward} but shouldn't exceed {batch_size}"
 
             rewards_per_episode.append(total_reward)
 
