@@ -1,3 +1,7 @@
+"""Q learning with 
+Bellman optimality condition 
+for update 
+"""
 import gymnasium as gym
 import numpy as np
 
