@@ -16,7 +16,7 @@ class FrozenLakeAgent:
     def __init__(self,
                  env,
                  gamma=0.99,
-                 alpha=0.7):
+                 alpha=0.1):
         
         # Environment for agent
         self.env = env
@@ -41,18 +41,18 @@ class FrozenLakeAgent:
     def update_q(self, state, action, reward, next_state):
         self.Q_table[state, action] = (1 - self.alpha) * self.Q_table[state, action] + \
                                        self.alpha * (reward + self.gamma * \
-                                                     np.argmax(self.Q_table[next_state, :])
+                                                     np.max(self.Q_table[next_state, :])
                                                      )
 
-    def train(self, n_episodes, explortion_rate):
+    def train(self, n_episodes, n_steps_per_episode, explortion_rate):
         rewards_per_episode = []
         for episode in range(n_episodes):
             state = self.env.reset()[0]
             total_reward = 0
             done = False
-            epsilon = explortion_rate(episode)
+            epsilon = explortion_rate (episode)
 
-            while not done:
+            for _ in range(n_steps_per_episode):
                 # select action
                 action = self.policy(state, epsilon)
                 # update Q table
@@ -73,10 +73,19 @@ class FrozenLakeAgent:
 
         
 if __name__ == '__main__':
+    n_episodes = 10000
+    n_steps_per_episode = 100
+    min_rate = 0.01
+    max_rate = 1
+    decay_rate = 0.001
+    learning_rate = 0.1
+    discount_rate = 0.99
+
     env = gym.make('FrozenLake-v1', render_mode='ansi') 
-    explortion_rate = ExplorationRateDecay(0.0001, 1, 0.0005)
-    agent = FrozenLakeAgent(env)
-    agent.train(10000, explortion_rate)
+    explortion_rate = ExplorationRateDecay(min_rate, max_rate, decay_rate)
+    agent = FrozenLakeAgent(env, discount_rate, learning_rate)
+    agent.train(n_episodes, n_steps_per_episode, explortion_rate)
+
     print(f"\x1B[33m-----Q_table-----\x1B[0m")
     np.set_printoptions(precision=2)
     print('\x1B[34m', agent.Q_table)
