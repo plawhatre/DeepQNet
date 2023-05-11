@@ -153,7 +153,7 @@ class DQNAgent:
                 self.optimizer.step()
 
                 # reward increament for present step
-                total_reward += target_q_values.sum().item()
+                total_reward += sampled_batch_rewards.sum().item()
 
                 if self.target_net_update_freq == step:
                     self.update_target_net()
@@ -164,7 +164,7 @@ class DQNAgent:
 
             rewards_per_episode.append(total_reward)
 
-            if episode % 10 == 9:
+            if episode % 100 == 99:
                 print(f"\x1B[35mEpisode: {episode}, ",
                       f"Reward: {sum(rewards_per_episode[-1000:])/(batch_size*1000.0)}\x1B[0m""")
 
